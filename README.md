@@ -12,8 +12,11 @@ brew tap braidkit/tap
 brew install --cask braid
 ```
 
-macOS on Intel and Apple Silicon. On Linux, use `install.sh` from
-[braidkit/braid-releases](https://github.com/braidkit/braid-releases).
+macOS on Intel and Apple Silicon. On Linux, use the installer:
+
+```sh
+curl -fsSL https://braidkit.io/cli/install.sh | bash
+```
 
 ## What gets installed
 
@@ -24,12 +27,17 @@ Braid runs as a version-matched pair, and the cask installs both halves:
 | `braid` | the CLI you invoke |
 | `braid-daemon` | the local daemon that holds lifecycle state |
 
+Shell completions for bash, zsh, and fish are installed alongside them.
+
 Both report the same version, commit, and build date. An install where they
 disagree is a broken install, and `braid doctor` reports it as one.
 
 ## What installing does not do
 
-The cask places two binaries and an installation receipt. It does not:
+The cask places two binaries and their completions. Homebrew records the
+install in its own receipt; nothing writes a Braid installation receipt, which
+is why `braid uninstall` leaves a Homebrew installation to Homebrew. The cask
+does not:
 
 - create `~/.braid`, which the first stateful Braid command creates with
   owner-only permissions
@@ -61,13 +69,16 @@ brew uninstall --cask braid
 brew untap braidkit/tap
 ```
 
-Your work survives this. Uninstalling removes the binaries and the installation
-receipt. `~/.braid` and each repository's `.braid` directory stay where they
+Use Homebrew rather than `braid uninstall`, which reads a receipt this
+installation never wrote and will decline to touch it.
+
+Your work survives this. Uninstalling removes the binaries and their
+completions. `~/.braid` and each repository's `.braid` directory stay where they
 are, so removing them has to be something you choose to do.
 
 ## Provenance
 
-Casks in this tap point at releases in
-[braidkit/braid-releases](https://github.com/braidkit/braid-releases). Every
-version there publishes `checksums.txt`, an SPDX SBOM, and SLSA build
-provenance next to the archives.
+Casks in this tap point at `https://braidkit.io/cli/releases/<tag>/`, the same
+artifacts the installer downloads. Each version publishes `checksums.txt` next
+to its archives, and every cask pins the exact SHA-256 of the archive it
+installs, so Homebrew rejects a download whose bytes have changed.
