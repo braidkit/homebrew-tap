@@ -55,9 +55,26 @@ jobs:
           # on_intel before on_arm and its own argument alignment, and
           # hand-fixing a file headed DO NOT EDIT would be undone by the next
           # release.
+
+          # One broken cask must not hide the rest. Under `set -e` an unchecked
+          # `brew audit` would abort the run on the first failure, leave its
+          # ::group:: unclosed, and never look at the casks after it — so a
+          # second broken cask stays invisible until the first is fixed. Each
+          # result is captured and the exit deferred, so one run reports every
+          # cask that is broken. Accumulated as a string, not an array: under
+          # `set -u`, expanding an empty array errors on the bash 3.2 that ships
+          # with macOS.
+          failed=""
           for cask in "${casks[@]}"; do
             name="$(basename "${cask}" .rb)"
             echo "::group::brew audit ${name}"
-            brew audit --cask --new --skip-style "braidkit/tap/${name}"
+            if ! brew audit --cask --new --skip-style "braidkit/tap/${name}"; then
+              failed="${failed} ${name}"
+            fi
             echo "::endgroup::"
           done
+
+          if [ -n "${failed}" ]; then
+            echo "::error::brew audit failed for:${failed}"
+            exit 1
+          fi
